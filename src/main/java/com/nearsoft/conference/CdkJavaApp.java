@@ -1,4 +1,4 @@
-package com.myorg;
+package com.nearsoft.conference;
 
 import software.amazon.awscdk.core.App;
 

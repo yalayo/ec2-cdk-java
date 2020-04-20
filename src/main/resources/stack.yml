@@ -1,0 +1,46 @@
+Resources:
+  AppNode:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-03ba3948f6c37a4b0
+      KeyName: aws-key-vconf
+      SecurityGroups:
+        - !Ref AppNodeSG
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo apt-get update
+        sudo apt-get -y upgrade
+        sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
+        sudo apt-get update
+        sudo apt-get -y install docker-ce
+        sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        sudo usermod -aG docker ubuntu
+        sudo chmod 777 /var/run/docker.sock
+        git clone https://github.com/yuninho2005/docker-jitsi-meet && cd docker-jitsi-meet
+        cp env.example .env
+        mkdir -p /docker-jitsi-meet/cfg/{web/letsencrypt,transcripts,prosody,jicofo,jvb,jigasi,jibri}
+        sudo chmod +x gen-passwords.sh
+        sudo ./gen-passwords.sh
+        docker-compose up -d
+
+  AppNodeSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: To allow ssh and http
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
